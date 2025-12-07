@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CacheMap Web Simulator</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js" type="text/javascript"></script>
+  
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <section id="login-view" class="view active">
+      <div class="card login-card">
+        <div class="neon-header">
+          <span class="word" id="word-cache">CACHEMAP</span>
+          <span class="word" id="word-memory">WEB</span>
+          <span class="word" id="word-sim">SIMULATOR</span>
+        </div>
+        <p class="subtitle">Secure Cache Memory Simulator (Web Edition)</p>
+
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" autocomplete="current-password">
+        </div>
+        <div class="buttons">
+          <button id="btn-login" class="btn primary">Login</button>
+          <button id="btn-open-register" class="btn secondary">Create Account</button>
+        </div>
+        <p class="hint">Tip: On first run a default admin <code>admin/admin</code> is created.</p>
+        <div id="login-message" class="message"></div>
+      </div>
+
+      <div id="register-dialog" class="modal hidden">
+        <div class="modal-content">
+          <h2>Create Guest Account</h2>
+          <div class="form-group">
+            <label for="reg-username">Username</label>
+            <input type="text" id="reg-username">
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password">
+          </div>
+          <div class="buttons">
+            <button id="btn-register" class="btn primary">Create</button>
+            <button id="btn-cancel-register" class="btn secondary">Cancel</button>
+          </div>
+          <div id="reg-message" class="message"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="main-view" class="view">
+      <header class="top-bar">
+        <div>
+          <span class="app-title">CacheMap Web Simulator</span>
+          <span id="user-info" class="user-info"></span>
+        </div>
+        <button id="btn-logout" class="btn danger small">Logout</button>
+      </header>
+
+      <div class="layout">
+        <div class="left-panel">
+          <h2>Simulation Parameters</h2>
+          <div class="form-group">
+            <label for="cache-size">Cache Size (bytes)</label>
+            <input type="number" id="cache-size" value="1024" min="1">
+          </div>
+          <div class="form-group">
+            <label for="block-size">Block Size (bytes)</label>
+            <input type="number" id="block-size" value="4" min="1">
+          </div>
+          <div class="form-group">
+            <label for="assoc">Associativity</label>
+            <input type="number" id="assoc" value="4" min="1">
+          </div>
+          <div class="form-group">
+            <label for="policy">Replacement Policy</label>
+            <select id="policy">
+              <option value="LRU">LRU</option>
+              <option value="FIFO">FIFO</option>
+              <option value="RANDOM">RANDOM</option>
+            </select>
+          </div>
+
+          <h3>Sequence File</h3>
+          <p class="small-text">
+            Upload a text file with lines like:
+            <code>Read 4 0x10</code> or <code>Write 4 32</code>
+          </p>
+          <div class="form-group">
+            <input type="file" id="seq-file" accept=".txt">
+          </div>
+          <div class="form-group">
+            <label for="seq-name">Sequence name (for logs)</label>
+            <input type="text" id="seq-name" placeholder="my_sequence.txt">
+          </div>
+          <button id="btn-run" class="btn primary full">Run Simulation</button>
+          <div id="run-message" class="message"></div>
+
+          <h3>Binary Values File</h3>
+          <button id="btn-binary-file" class="btn secondary full">View Binary File</button>
+
+          <hr style="border-color: #333; margin: 15px 0;">
+
+          <h3>Hardware Control</h3>
+          <p class="small-text">Run <code>iverilog</code> on server using <code>cache_sim_tb.v</code></p>
+          <button id="btn-run-verilog" class="btn primary full" style="background: linear-gradient(135deg, #00b2ff, #0056b3); border-color: #0077cc;">
+             Run Verilog TB
+          </button>
+        </div>
+
+        <div class="right-panel">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="results-tab">Results</button>
+            <button class="tab-btn" data-tab="truth-tab">Truth Table</button>
+            <button class="tab-btn" data-tab="logic-tab">Hierarchy / Logic</button>
+            <button class="tab-btn" data-tab="tab-verilog">Hardware (Logs)</button>
+            <button class="tab-btn" data-tab="waveform-tab">Waveform Viewer</button>
+            <button class="tab-btn admin-only" data-tab="admin-tab">Admin</button>
+          </div>
+
+          <div class="tab-panel active" id="results-tab">
+            <h2>Access Log</h2>
+            <pre id="results-area" class="code-area"></pre>
+            <h2>Statistics</h2>
+            <pre id="stats-area" class="code-area"></pre>
+            <h2>Charts</h2>
+            <div class="charts-row">
+              <canvas id="hit-miss-chart"></canvas>
+            </div>
+            <h2>Cache Sets</h2>
+            <pre id="sets-area" class="code-area"></pre>
+          </div>
+
+          <div class="tab-panel" id="truth-tab">
+            <h2>Truth Table (Recent Accesses)</h2>
+            <table id="truth-table">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>Tag</th>
+                  <th>Set</th>
+                  <th>Valid</th>
+                  <th>TagMatch</th>
+                  <th>Output</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="tab-panel" id="logic-tab">
+            <h2>Interactive Logic Circuit</h2>
+            <p class="small-text">
+              Click a row in the <strong>Truth Table</strong> tab to see how the gates and data flow change.
+            </p>
+            
+            <div id="logic-diagram" class="logic-circuit-container">
+              <div id="logic-header" class="circuit-header">
+                Select a row in the Truth Table to view state...
+              </div>
+
+              <div class="circuit-layout">
+                <svg class="circuit-wires" viewBox="0 0 800 300">
+                  <path id="path-tag" d="M 160 80 L 300 130" class="wire-path" />
+                  <path id="path-valid" d="M 160 220 L 300 170" class="wire-path" />
+                  <path id="path-and" d="M 420 150 L 520 150" class="wire-path" />
+                  <path id="path-mux" d="M 640 150 L 700 150" class="wire-path" />
+                </svg>
+
+                <div class="component-box input-box" id="box-tag" style="top: 50px; left: 20px;">
+                  <div class="label">TAG MATCH</div>
+                  <div class="value" id="val-tag">0</div>
+                </div>
+
+                <div class="component-box input-box" id="box-valid" style="top: 190px; left: 20px;">
+                  <div class="label">VALID BIT</div>
+                  <div class="value" id="val-valid">0</div>
+                </div>
+
+                <div class="component-box gate-box" id="box-and" style="top: 120px; left: 300px;">
+                  <div class="label-large">AND</div>
+                  <div class="sub-label" id="val-and">0</div>
+                </div>
+
+                <div class="component-box gate-box" id="box-mux" style="top: 120px; left: 520px;">
+                  <div class="label-large">MUX</div>
+                  <div class="sub-label" id="val-mux">0</div>
+                </div>
+
+                <div class="component-box output-box" id="box-out" style="top: 125px; left: 700px;">
+                  <div class="label">OUTPUT</div>
+                  <div class="value" id="val-out">MISS</div>
+                </div>
+              </div>
+            </div>
+
+            <h2 style="margin-top:16px;">Hierarchy Demo (L1 / L2 Stats)</h2>
+            <div class="buttons" style="justify-content:flex-start;margin-top:4px;">
+              <button id="btn-run-hierarchy" class="btn primary small">Run Hierarchy Demo</button>
+            </div>
+            <pre id="hierarchy-results" class="code-area small" style="margin-top:8px;"></pre>
+          </div>
+
+          <div class="tab-panel" id="tab-verilog">
+             <h2>Hardware Simulation Logs</h2>
+             <div class="card" style="padding: 0; background: transparent; border: none;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                    <strong>Simulator Terminal (Verilog TestBench)</strong>
+                    <span class="small-text">Source: cache_sim_tb.v</span>
+                </div>
+                <pre id="verilog-area" class="code-area" style="height: 500px; color: #00ffff; background-color: #001a1a; border: 1px solid #004d4d;">
+Click "Run Verilog TB" in the left panel to execute the hardware testbench.
+                </pre>
+             </div>
+          </div>
+
+          <div class="tab-panel" id="waveform-tab">
+            <h2>Hardware Timing Diagram (Visualizer)</h2>
+            <div class="card" style="background: white; overflow-x: auto; padding: 10px;">
+                <script type="WaveDrom">
+                { signal : [
+                  { name: "clk",  wave: "p......." },
+                  { name: "addr", wave: "x34567x", data: ["0x10","0x20","0x40","0x50","0x60"] },
+                  { name: "l1_hit",  wave: "0.1.0..10" },
+                  { name: "l1_miss", wave: "0..1....." },
+                  { name: "l2_hit",  wave: "0..1....." },
+                  { name: "mem_acc", wave: "0...1...." }
+                ]}
+                </script>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h3>Detailed Analysis</h3>
+                <p class="small-text">
+                    The diagram above is a visualization of the testbench logic. 
+                    To view the actual, nanosecond-precise simulation output generated by Icarus Verilog:
+                </p>
+                <a href="/api/download_vcd" target="_blank" class="btn secondary">Download .vcd File</a>
+                <p class="small-text" style="margin-top:5px; color: #888;">
+                    (Open this file in GTKWave or VS Code WaveTrace extension)
+                </p>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="admin-tab">
+            <h2>Admin Panel</h2>
+            <div class="admin-section">
+              <h3>Activity Logs</h3>
+              <button id="btn-refresh-logs" class="btn secondary small">Refresh Logs</button>
+              <pre id="logs-area" class="code-area small"></pre>
+            </div>
+            <div class="admin-section">
+              <h3>Manage Users</h3>
+              <button id="btn-refresh-users" class="btn secondary small">Refresh Users</button>
+              <table id="users-table">
+                <thead>
+                  <tr><th>Username</th><th>Role</th><th>Actions</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <h4>Create User</h4>
+              <div class="grid-3">
+                <input type="text" id="admin-new-username" placeholder="Username">
+                <input type="password" id="admin-new-password" placeholder="Password">
+                <select id="admin-new-role">
+                  <option value="guest">Guest</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <button id="btn-admin-create-user" class="btn primary small">Create</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

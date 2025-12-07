@@ -1,0 +1,44 @@
+[*]
+[*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
+[*] Sat Dec 06 14:57:59 2025
+[*]
+[dumpfile] "C:\Users\Sarva\OneDrive\Desktop\cms\templates\cache_waveform.vcd"
+[savefile] "C:\Users\Sarva\OneDrive\Desktop\cms\templates\waveform1.gtkw"
+[timestart] 29280
+[size] 1000 600
+[pos] -1 -1
+*-13.660641 30700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 174
+[signals_width] 134
+[sst_expanded] 1
+[sst_vpaned_height] 157
+@22
+cache_hierarchy_tb.address[31:0]
+@28
+cache_hierarchy_tb.clk
+@22
+cache_hierarchy_tb.data_in[7:0]
+cache_hierarchy_tb.data_out[7:0]
+cache_hierarchy_tb.l1_data[7:0]
+@28
+cache_hierarchy_tb.l1_hit
+cache_hierarchy_tb.l1_miss
+@22
+cache_hierarchy_tb.l1_tag[31:0]
+@28
+cache_hierarchy_tb.l1_valid
+@22
+cache_hierarchy_tb.l2_data[7:0]
+@28
+cache_hierarchy_tb.l2_hit
+cache_hierarchy_tb.l2_miss
+@22
+cache_hierarchy_tb.l2_tag[31:0]
+@28
+cache_hierarchy_tb.l2_valid
+cache_hierarchy_tb.memory_access
+cache_hierarchy_tb.read_write
+@29
+cache_hierarchy_tb.rst_n
+[pattern_trace] 1
+[pattern_trace] 0

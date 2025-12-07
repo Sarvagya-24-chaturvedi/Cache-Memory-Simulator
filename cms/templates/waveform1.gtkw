@@ -1,0 +1,27 @@
+[*]
+[*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
+[*] Sat Dec 06 15:25:22 2025
+[*]
+[dumpfile] "C:\Users\Sarva\OneDrive\Desktop\cms\templates\cache_waveform.vcd"
+[savefile] "C:\Users\Sarva\OneDrive\Desktop\cms\templates\waveform1.gtkw"
+[timestart] 0
+[size] 1536 793
+[pos] -191 -186
+*-13.903065 20000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 174
+[signals_width] 134
+[sst_expanded] 1
+[sst_vpaned_height] 225
+@28
+cache_hierarchy_tb.clk
+@22
+cache_hierarchy_tb.address[31:0]
+@28
+cache_hierarchy_tb.l1_hit
+cache_hierarchy_tb.l1_miss
+cache_hierarchy_tb.l2_hit
+cache_hierarchy_tb.l2_miss
+cache_hierarchy_tb.memory_access
+cache_hierarchy_tb.read_write
+[pattern_trace] 1
+[pattern_trace] 0
