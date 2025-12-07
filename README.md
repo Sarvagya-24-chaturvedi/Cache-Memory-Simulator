@@ -18,7 +18,8 @@ A secure Cache Memory Simulator (Web Edition)
 *Shows the raw output logs from the Icarus Verilog simulation running on the server.*
 ![Verilog Logs](Assets/Hardware%20Simulation%20logs%20(Verilog%20TestBench).jpg)
 
-**For examining other screenshots visit the Assets folder**(https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator/tree/main/Assets)
+**For examining other screenshots visit the Assets folder**
+(https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator/tree/main/Assets)
 
 ## 🚀 Key Features
 
