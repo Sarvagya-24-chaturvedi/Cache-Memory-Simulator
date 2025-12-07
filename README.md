@@ -12,7 +12,7 @@ A secure Cache Memory Simulator (Web Edition)
 ### 2. Interactive Logic Diagram
 *Visualizes the hardware logic for Hit/Miss detection. Wires light up (green/red) based on the selected Truth Table row.*
 ![Logic Diagram for Miss](Assets/Logic%20Circuit%201.jpg)
-[Logic Diagram for Hit](Assets/Logic%20Circuit%202.jpg)
+![Logic Diagram for Hit](Assets/Logic%20Circuit%202.jpg)
 
 ### 3. Hardware Verification (Verilog)
 *Shows the raw output logs from the Icarus Verilog simulation running on the server.*
