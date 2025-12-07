@@ -3,6 +3,21 @@ A secure Cache Memory Simulator (Web Edition)
 # CacheMap Web Simulator 
 **CacheMap** is a full-stack educational tool designed to visualize and simulate CPU Cache Memory behavior. It combines a flexible **Python software simulator** with real **Verilog hardware simulation**, providing a comprehensive environment for understanding computer architecture concepts like Hit/Miss logic, Replacement Policies (LRU, FIFO), and Hierarchical Caching (L1/L2).
 
+## 📸 Interface Screenshots
+
+### 1. Main Dashboard
+*Configure cache parameters, upload trace files, and view real-time hit/miss statistics.*
+![Main Dashboard](Assets/Simulation%20run.png)
+
+### 2. Interactive Logic Diagram
+*Visualizes the hardware logic for Hit/Miss detection. Wires light up (green/red) based on the selected Truth Table row.*
+![Logic Diagram for Miss](Assets/Logic%20Circuit%201.jpg)
+[Logic Diagram for Hit](Assets/Logic%20Circuit%202.jpg)
+
+### 3. Hardware Verification (Verilog)
+*Shows the raw output logs from the Icarus Verilog simulation running on the server.*
+![Verilog Logs](Assets/Hardware%20Simulation%20logs%20(Verilog%20TestBench).jpg)
+
 ## 🚀 Key Features
 
 * **Dual Simulation Engine:**
