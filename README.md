@@ -1,5 +1,3 @@
-# Cache-Memory-Simulator
-A secure Cache Memory Simulator (Web Edition)
 # CacheMap Web Simulator 
 **CacheMap** is a full-stack educational tool designed to visualize and simulate CPU Cache Memory behavior. It combines a flexible **Python software simulator** with real **Verilog hardware simulation**, providing a comprehensive environment for understanding computer architecture concepts like Hit/Miss logic, Replacement Policies (LRU, FIFO), and Hierarchical Caching (L1/L2).
 
