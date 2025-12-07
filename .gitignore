@@ -1,0 +1,39 @@
+# ===========================
+# Python / Flask
+# ===========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.env
+instance/
+.pytest_cache/
+
+# ===========================
+# Security & User Data (CRITICAL)
+# ===========================
+# Never commit these! They contain secrets and user passwords.
+app_secret.bin
+users.json
+users.hmac
+secure_log.txt
+
+# ===========================
+# Hardware Simulation Artifacts
+# ===========================
+# These are generated every time you run a simulation.
+# We don't want to clutter the repo with them.
+cache_sim_exec
+cache_waveform.vcd
+binary_values.txt
+
+# ===========================
+# OS & IDE Files
+# ===========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
