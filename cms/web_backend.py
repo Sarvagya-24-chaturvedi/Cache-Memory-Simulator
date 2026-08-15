@@ -12,6 +12,8 @@ Features:
 
 from __future__ import annotations
 
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+
 import base64
 import hashlib
 import hmac
@@ -624,6 +626,20 @@ app = Flask(
     template_folder="templates",
 )
 
+REQUEST_COUNT = Counter(
+    "flask_request_count",
+    "Total number of HTTP requests"
+)
+
+@app.route("/metrics")
+def metrics():
+    return generate_latest(), 200, {
+        "Content-Type": CONTENT_TYPE_LATEST
+    }
+
+@app.before_request
+def count_requests():
+    REQUEST_COUNT.inc()
 
 @app.route("/")
 def index():
