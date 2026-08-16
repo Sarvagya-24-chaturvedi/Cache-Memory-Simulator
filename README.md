@@ -1,138 +1,226 @@
-# CacheMap Web Simulator 
-**CacheMap** is a full-stack educational tool designed to visualize and simulate CPU Cache Memory behavior. It combines a flexible **Python software simulator** with real **Verilog hardware simulation**, providing a comprehensive environment for understanding computer architecture concepts like Hit/Miss logic, Replacement Policies (LRU, FIFO), and Hierarchical Caching (L1/L2).
+# CacheMap — Cache Memory Simulator
+
+**CacheMap** is a full-stack educational tool for visualizing and simulating CPU cache memory behavior. It pairs a Python software simulator with an actual **Verilog hardware simulation**, allowing users to explore concepts such as Hit/Miss logic, replacement policies (LRU, FIFO), and hierarchical caching (L1/L2) both in software and at the gate level all from one dashboard. The project also integrates a **DevOps pipeline** using **Git, GitHub Actions, Docker, Docker Compose, Nginx, Pytest, Prometheus, and Grafana**, enabling automated testing, containerized deployment, continuous integration, reverse-proxy management, and real-time application monitoring.
 
 ## 📸 Interface Screenshots
 
-### 1. Main Dashboard
-*Configure cache parameters, upload trace files, and view real-time hit/miss statistics.*
+### Main Dashboard
+Configure cache parameters, upload trace files, and view real-time hit/miss statistics.
 ![Main Dashboard](Assets/Simulation%20run.png)
 
-### 2. Interactive Logic Diagram
-*Visualizes the hardware logic for Hit/Miss detection. Wires light up (green/red) based on the selected Truth Table row.*
+### Interactive Logic Diagram
+An SVG circuit diagram that lights up (green/red) to show Tag Match, Valid bit, and AND/MUX logic driving a Hit or Miss.
 ![Logic Diagram for Miss](Assets/Logic%20Circuit%201.jpg)
 ![Logic Diagram for Hit](Assets/Logic%20Circuit%202.jpg)
 
-### 3. Hardware Verification (Verilog)
-*Shows the raw output logs from the Icarus Verilog simulation running on the server.*
+### Hardware Verification (Verilog)
+Raw output logs from the Icarus Verilog simulation, run server-side.
 ![Verilog Logs](Assets/Hardware%20Simulation%20logs%20(Verilog%20TestBench).jpg)
 
-**For examining other screenshots visit the Assets folder**
-(https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator/tree/main/Assets)
+More screenshots (waveform viewer, admin panel, truth tables) are in the [`Assets`](Assets) folder.
 
 ## 🚀 Key Features
 
-* **Dual Simulation Engine:**
-    * **Software Mode:** Instant simulation of cache behavior using Python. Supports variable cache sizes, block sizes, associativity, and replacement policies.
-    * **Hardware Mode:** Compiles and runs actual **Verilog** testbenches on the server using **Icarus Verilog**, generating accurate timing diagrams.
-* **Interactive Visualizations:**
-    * **Logic Diagram:** A dynamic SVG circuit that lights up to show how Tag Matches, Valid bits, and AND/MUX gates determine a Hit or Miss.
-    * **Waveform Viewer:** Integrated **WaveDrom** viewer for digital timing analysis directly in the browser.
-* **Hierarchy Demo:** Simulates the interaction between L1 Cache, L2 Cache, and Main Memory.
-* **Secure Admin Panel:** Manage users and view obfuscated activity logs.
-* **Tamper-Proof Security:** Uses HMAC (Hash-based Message Authentication Code) to ensure user data integrity.
+| Category | What it does |
+|---|---|
+| **Dual simulation engine** | **Software mode** runs an instant Python simulation with configurable cache size, block size, associativity, and replacement policy. **Hardware mode** compiles and runs real Verilog testbenches (`cache_logic.v`, `cache_sim_tb.v`) via **Icarus Verilog**, producing accurate timing diagrams. |
+| **Interactive visualizations** | A dynamic logic diagram shows how tag matches and valid bits resolve to a hit or miss; an integrated **WaveDrom**-style viewer renders digital timing waveforms in the browser. |
+| **Cache hierarchy demo** | Simulates L1, L2, and main-memory interaction on a single request. |
+| **Accounts & admin panel** | User login/signup, an admin panel for user management, and per-user activity logging. |
+| **Tamper-evident storage** | The user database is HMAC-signed so manual edits to `users.json` are detected and rejected. |
+| **DevOps-ready deployment** | Dockerized Flask app behind an Nginx reverse proxy, with Prometheus metrics scraping and a Grafana datasource wired up out of the box. |
+| **Continuous Integration** | A GitHub Actions workflow installs dependencies, runs the `pytest` suite, and builds the Docker image on every push/PR. |
 
----
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    U["🌐 Browser<br/>Dashboard UI"] -->|HTTP :8080| N["Nginx<br/>reverse proxy"]
+    N -->|proxy_pass :8000| F["Flask App<br/>web_backend.py"]
+
+    F --> S["Python Cache Engine<br/>direct-mapped / N-way<br/>LRU · FIFO · L1+L2"]
+    F --> V["Icarus Verilog<br/>(subprocess)"]
+    V --> VCD[".vcd waveform<br/>+ sim logs"]
+    F --> D["users.json / users.hmac<br/>app_secret.bin (HMAC-signed)"]
+
+    F -->|/metrics| P["Prometheus<br/>:9090"]
+    P --> G["Grafana<br/>:3000"]
+
+    style U fill:#1f2937,color:#fff
+    style N fill:#0e7490,color:#fff
+    style F fill:#7c3aed,color:#fff
+    style S fill:#059669,color:#fff
+    style V fill:#b45309,color:#fff
+    style P fill:#dc2626,color:#fff
+    style G fill:#ea580c,color:#fff
+```
+
+*(GitHub renders Mermaid diagrams natively in the README. If viewing elsewhere, see the plain-text fallback below.)*
+
+<details>
+<summary>Plain-text fallback</summary>
+
+```
+                ┌───────────┐      ┌──────────────┐      ┌─────────────┐
+  Browser ───▶  │   Nginx   │ ───▶ │  Flask app   │ ───▶ │   Icarus    │
+ (dashboard)    │  :8080    │      │ web_backend  │      │   Verilog   │
+                └───────────┘      │  .py :8000   │      │ (subprocess)│
+                                    └──────┬───────┘      └─────────────┘
+                                           │
+                            ┌──────────────┼───────────────┐
+                            ▼                              ▼
+                     users.json / users.hmac      Python cache-sim engine
+                     (HMAC-signed, app_secret.bin) (direct-mapped / N-way,
+                                                      LRU / FIFO, L1+L2)
+
+        Prometheus (:9090) scrapes Flask /metrics  →  Grafana (:3000)
+```
+</details>
+
+## ⚙️ DevOps Integration
+
+CacheMap ships with a production-style DevOps stack, not just an app:
+
+```mermaid
+flowchart TD
+    A["git push / PR<br/>(main or feature/deploy-app)"] --> B["GitHub Actions<br/>.github/workflows/docker.yml"]
+    B --> C["Checkout + setup Python 3.9"]
+    C --> D["pip install -r requirements.txt"]
+    D --> E["pytest — run test suite"]
+    E --> F{"Tests pass?"}
+    F -- "no" --> X["❌ CI fails,<br/>PR blocked"]
+    F -- "yes" --> G["docker build -t<br/>cache-memory-simulator ."]
+    G --> H["✅ CI green"]
+    H -.-> I["docker compose up --build<br/>Flask + Nginx + Prometheus + Grafana"]
+
+    style B fill:#2563eb,color:#fff
+    style F fill:#f59e0b,color:#000
+    style X fill:#dc2626,color:#fff
+    style H fill:#059669,color:#fff
+    style I fill:#7c3aed,color:#fff
+```
+
+- **CI (GitHub Actions):** `.github/workflows/docker.yml` triggers on pushes to `main`/`feature/deploy-app` and on PRs into `main`. It installs Python dependencies, runs `pytest` (`cms/tests/`), and then builds the Docker image to confirm it's shippable.
+- **Containerization:** The Flask app is packaged with a `Dockerfile` (Python 3.11-slim base). `docker-compose.yml` orchestrates it alongside supporting infra.
+- **Reverse proxy:** Nginx (`nginx/nginx.conf`) sits in front of Flask, terminating the public port (`8080`) and forwarding to the app container (`8000`).
+- **Observability:** Flask exposes a `/metrics` endpoint that Prometheus (`prometheus/prometheus.yml`) scrapes every 5s; Grafana is pre-wired to read from Prometheus as a datasource for building dashboards.
+- **Restart policy:** All Compose services use `restart: unless-stopped` for resilience in a long-running deployment.
+
+| Component | Role | Config file |
+|---|---|---|
+| GitHub Actions | CI: test + Docker build gate | `.github/workflows/docker.yml` |
+| Docker | Packages the Flask app | `Dockerfile` |
+| Docker Compose | Orchestrates the full stack | `docker-compose.yml` |
+| Nginx | Reverse proxy / public entrypoint | `nginx/nginx.conf` |
+| Prometheus | Metrics scraping | `prometheus/prometheus.yml` |
+| Grafana | Metrics visualization | *(datasource volume mount in `docker-compose.yml`)* |
 
 ## 🛠️ Prerequisites
 
-Before running the application, ensure you have the following installed:
+**Run with Docker (recommended)** — only Docker and Docker Compose are required.
 
-### 1. Python (Backend)
-Required to run the Flask server.
-* [Download Python](https://www.python.org/downloads/)
+**Run locally without Docker:**
+- **Python 3.11+** to run the Flask server.
+- **Icarus Verilog** to compile the `.v` testbenches:
+  - Windows: [Download Icarus Verilog](https://bleyer.org/icarus/) (add it to `PATH` during install)
+  - Linux: `sudo apt-get install iverilog`
+  - macOS: `brew install icarus-verilog`
+- **GTKWave** (optional) — to view downloaded `.vcd` waveform files offline.
 
-### 2. Icarus Verilog (Hardware Simulation)
-Required to compile the Verilog (`.v`) files.
-* **Windows:** [Download Icarus Verilog](https://bleyer.org/icarus/) (Ensure you add it to your system PATH during installation).
-* **Linux:** `sudo apt-get install iverilog`
-* **macOS:** `brew install icarus-verilog`
+## 📦 Getting Started
 
-### 3. GTKWave (Optional)
-Recommended if you want to download and view the `.vcd` waveform files offline.
+### Option A: Docker Compose (Flask + Nginx + Prometheus + Grafana)
 
----
+```bash
+git clone https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator.git
+cd Cache-Memory-Simulator/cms
+docker compose up --build
+```
 
-## 📦 Installation & Setup
+| Service    | URL                      | Container name    | Notes |
+|------------|--------------------------|--------------------|-------|
+| Dashboard  | http://localhost:8080    | `cache-nginx`      | Public entrypoint, proxies to Flask |
+| Flask app  | (internal only, `:8000`) | `cache-flask`      | Not published directly to the host |
+| Prometheus | http://localhost:9090    | `cache-prometheus` | Scrapes `flask:8000/metrics` every 5s |
+| Grafana    | http://localhost:3000    | `cache-grafana`    | Pre-configured Prometheus datasource |
 
-1.  **Clone the Repository**
-    ```bash
-    git clone [https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator.git](https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator.git)
-    cd Cache-Memory-Simulator
-    ```
+### Option B: Run the Flask app directly
 
-2.  **Install Python Dependencies**
-    ```bash
-    pip install flask
-    ```
+```bash
+git clone https://github.com/Sarvagya-24-chaturvedi/Cache-Memory-Simulator.git
+cd Cache-Memory-Simulator/cms
+pip install -r requirements.txt
+python web_backend.py
+```
 
-3.  **Run the Application**
-    ```bash
-    python app.py
-    ```
+Then open `http://127.0.0.1:8000`.
 
-4.  **Access the Dashboard**
-    Open your browser and navigate to:
-    `http://127.0.0.1:5000`
+**Default admin credentials:** `admin` / `admin` — change these immediately after first login.
 
-    * **Default Admin Credentials:**
-        * **Username:** `admin`
-        * **Password:** `admin`
-    * *(Note: Change these immediately after logging in for the first time)*
+## 🔐 Security & Auto-Generated Files
 
----
+On first run, the app creates the following in `cms/`. Do not delete or hand-edit them:
 
-## 🔐 Security System & Auto-Generated Files
-
-This application implements a file-based integrity system to secure user data. When you run the application for the first time, the following critical files will be **automatically created** in the root directory:
-
-1.  **`app_secret.bin`**
-    * **What it is:** A cryptographically strong random binary key (32 bytes).
-    * **Usage:** This key is used to sign the session tokens and compute the HMAC for the user database.
-    * **Important:** **DO NOT DELETE** this file. If deleted, all existing user sessions and the user database integrity check will fail.
-
-2.  **`users.json`**
-    * **What it is:** The database storing user credentials (usernames, hashed passwords, and roles).
-    * **Usage:** It acts as the persistent storage for the login system.
-
-3.  **`users.hmac`**
-    * **What it is:** A text file containing a SHA-256 hash signature of the `users.json` file.
-    * **Usage:** Every time the application loads, it calculates the hash of `users.json` using the `app_secret.bin`. It compares this new hash with the content of `users.hmac`.
-    * **Why?** This prevents manual tampering. If someone manually edits `users.json` to change their role to "admin", the hashes won't match, and the secure system will reject the data to prevent unauthorized access.
-
----
+| File              | Purpose |
+|-------------------|---------|
+| `app_secret.bin`  | Cryptographically random 32-byte key used to sign session tokens and compute the user-database HMAC. |
+| `users.json`      | Stores usernames, salted/hashed passwords, and roles. |
+| `users.hmac`      | SHA-256 HMAC of `users.json`, checked on every load. A mismatch (e.g. from manually editing a role to `admin`) causes the app to reject the file. |
 
 ## 📂 Project Structure
 
 ```text
-CacheMap-Simulator/
-├── app.py                 # Main Flask server & API logic
-├── binary_store.py        # Helper module for binary file operations
-├── cache_logic.v          # Verilog module: Cache Controller & Hit Logic
-├── cache_sim_tb.v         # Verilog testbench: Generates signals & waveforms
-├── app_secret.bin         # (Auto-generated) Security key
-├── users.json             # (Auto-generated) User database
-├── users.hmac             # (Auto-generated) Integrity signature
-├── static/
-│   ├── style.css          # The Neon/Cyberpunk theme styles
-│   └── app.js             # Frontend logic (Charts, WaveDrom, API calls)
-└── templates/
-    └── index.html         # Main dashboard interface
+Cache-Memory-Simulator/
+├── Assets/                  # Screenshots used in this README
+└── cms/
+    ├── web_backend.py       # Flask app: auth, admin API, simulator engine, Verilog runner
+    ├── binary_store.py      # Helper for encoding/reading binary trace data
+    ├── cache_logic.v        # Verilog: cache controller & hit/miss logic
+    ├── cache_sim_tb.v       # Verilog testbench: drives signals, emits waveform
+    ├── mem_sequence*.txt    # Sample memory access trace files
+    ├── requirements.txt     # Python dependencies
+    ├── Dockerfile           # Flask app image
+    ├── docker-compose.yml   # Flask + Nginx + Prometheus + Grafana stack
+    ├── nginx/nginx.conf     # Reverse proxy config
+    ├── prometheus/prometheus.yml
+    ├── static/              # Frontend JS/CSS (charts, waveform viewer, theme)
+    ├── templates/           # Dashboard HTML (index.html)
+    └── tests/               # Automated tests (run in CI)
 ```
+
 ## 🎮 How to Use
-1. **Software Simulation**
 
- - Upload a .txt sequence file (e.g., read 4 0x10, write 4 0x20).
- - Set Cache Size, Block Size, and Associativity.
- - Click Run Simulation.
- - View results in the Results tab (Hit Rate, Misses) and interact with the Logic Diagram.
+```mermaid
+flowchart LR
+    Login["🔑 Log in<br/>(admin/admin on first run)"] --> Choose{"Choose mode"}
+    Choose --> SW["🖥️ Software Simulation"]
+    Choose --> HW["🔌 Hardware (Verilog) Simulation"]
+    Choose --> HD["🏛️ Hierarchy Demo"]
 
-2. **Hardware (Verilog) Simulation**
+    SW --> SW1["Upload trace file<br/>or use sample .txt"]
+    SW1 --> SW2["Set cache size, block size,<br/>associativity, policy"]
+    SW2 --> SW3["Run Simulation"]
+    SW3 --> SW4["View hit/miss stats<br/>+ live logic diagram"]
 
- - Click Run Verilog TB in the left panel.
- - The server compiles cache_logic.v and cache_sim_tb.v.
- - Go to the Hardware (Logs) tab to see the terminal output.
- - Go to the Waveform Viewer tab to see the timing diagram visualized.
- - (Optional) Download the .vcd file to view in GTKWave.
+    HW --> HW1["Run Verilog TB"]
+    HW1 --> HW2["Server compiles<br/>cache_logic.v + cache_sim_tb.v"]
+    HW2 --> HW3["View logs + waveform,<br/>or download .vcd"]
+
+    HD --> HD1["Run L1/L2/Main Memory demo"]
+    HD1 --> HD2["Watch accesses cascade<br/>through the hierarchy"]
+
+    style Choose fill:#f59e0b,color:#000
+    style SW fill:#059669,color:#fff
+    style HW fill:#b45309,color:#fff
+    style HD fill:#7c3aed,color:#fff
+```
+
+| Mode | Steps |
+|---|---|
+| **1. Software simulation** | Upload a `.txt` trace file (e.g. `read 4 0x10`, `write 4 0x20`) or use a sample from `mem_sequence.txt` / `mem_sequence2.txt` → set cache size, block size, associativity, and replacement policy → click **Run Simulation** → view hit/miss stats in the Results tab and watch the logic diagram react to each access. |
+| **2. Hardware (Verilog) simulation** | Click **Run Verilog TB** → the server compiles `cache_logic.v` and `cache_sim_tb.v` with Icarus Verilog → check the **Hardware (Logs)** tab for raw output → check the **Waveform Viewer** tab for the timing diagram, or download the `.vcd` to inspect in GTKWave. |
+| **3. Hierarchy demo** | Run the built-in L1/L2/main-memory demo to see how accesses cascade through the cache hierarchy. |
 
 ## 📝 License
+
 This project is open-source and available under the MIT License.
