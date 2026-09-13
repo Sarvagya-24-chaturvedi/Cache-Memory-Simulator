@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: cache-memory-simulator
+    env: python
+    buildCommand: "cd cms && pip install -r requirements.txt"
+    startCommand: "cd cms && gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

@@ -3,288 +3,953 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CacheMap Web Simulator</title>
+  <title>Cache Memory Simulator & Hardware Verifier</title>
   
+  <!-- Modern Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Visualization Engines -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js"></script>
   
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div id="app">
+
+    <!-- ====================================================================
+         VIEW 1: AUTHENTICATION & LOGIN
+         ==================================================================== -->
     <section id="login-view" class="view active">
-      <div class="card login-card">
-        <div class="neon-header">
-          <span class="word" id="word-cache">CACHEMAP</span>
-          <span class="word" id="word-memory">WEB</span>
-          <span class="word" id="word-sim">SIMULATOR</span>
-        </div>
-        <p class="subtitle">Secure Cache Memory Simulator (Web Edition)</p>
+      <div class="login-wrapper">
+        <div class="login-card">
+          <div class="login-hero">
+            <div class="brand-logo">
+              <svg class="icon-svg lg" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
+            <h1 class="login-title">Cache Memory Simulator</h1>
+            <p class="login-subtitle">Architecture Simulation & Hardware Verilog Verification</p>
+          </div>
 
-        <div class="form-group">
-          <label for="login-username">Username</label>
-          <input type="text" id="login-username" autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label for="login-password">Password</label>
-          <input type="password" id="login-password" autocomplete="current-password">
-        </div>
-        <div class="buttons">
-          <button id="btn-login" class="btn primary">Login</button>
-          <button id="btn-open-register" class="btn secondary">Create Account</button>
-        </div>
-        <p class="hint">Tip: On first run a default admin <code>admin/admin</code> is created.</p>
-        <div id="login-message" class="message"></div>
-      </div>
-
-      <div id="register-dialog" class="modal hidden">
-        <div class="modal-content">
-          <h2>Create Guest Account</h2>
           <div class="form-group">
-            <label for="reg-username">Username</label>
-            <input type="text" id="reg-username">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" placeholder="admin" autocomplete="username">
           </div>
           <div class="form-group">
-            <label for="reg-password">Password</label>
-            <input type="password" id="reg-password">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
           </div>
-          <div class="buttons">
-            <button id="btn-register" class="btn primary">Create</button>
-            <button id="btn-cancel-register" class="btn secondary">Cancel</button>
+
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+            <button id="btn-login" class="btn primary full">
+              <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+              Sign In
+            </button>
+            <button id="btn-guest-quick" class="btn secondary full">
+              <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Explore as Guest (Instant Access)
+            </button>
+            <button id="btn-open-register" class="btn secondary full" style="font-size:12px;">
+              Create New Account
+            </button>
           </div>
-          <div id="reg-message" class="message"></div>
+
+          <p class="hint" style="text-align:center; font-size:11px; color:var(--text-muted); margin-top:10px;">
+            Initial administrator account: <code style="color:var(--accent-cyan)">admin / admin</code> (HMAC-SHA256 secured)
+          </p>
+          <div id="login-message" class="message"></div>
         </div>
       </div>
     </section>
 
+    <!-- ====================================================================
+         VIEW 2: MAIN WORKSTATION DASHBOARD
+         ==================================================================== -->
     <section id="main-view" class="view">
+      
+      <!-- Top Navigation Bar -->
       <header class="top-bar">
-        <div>
-          <span class="app-title">CacheMap Web Simulator</span>
-          <span id="user-info" class="user-info"></span>
+        <div class="brand-section">
+          <div class="brand-logo">
+            <svg class="icon-svg" viewBox="0 0 24 24">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+          </div>
+          <div class="brand-title">
+            Cache Simulator
+            <span class="brand-badge">Hardware & Software</span>
+          </div>
         </div>
-        <button id="btn-logout" class="btn danger small">Logout</button>
-      </header>
 
-      <div class="layout">
-        <div class="left-panel">
-          <h2>Simulation Parameters</h2>
-          <div class="form-group">
-            <label for="cache-size">Cache Size (bytes)</label>
-            <input type="number" id="cache-size" value="1024" min="1">
+        <div class="top-telemetry">
+          <div class="telemetry-item">
+            <span class="telemetry-label">Hit Rate</span>
+            <span class="telemetry-val" id="top-hit-rate" style="color:var(--hit-green)">0.0%</span>
           </div>
-          <div class="form-group">
-            <label for="block-size">Block Size (bytes)</label>
-            <input type="number" id="block-size" value="4" min="1">
+          <div class="telemetry-item">
+            <span class="telemetry-label">AMAT (Cycles)</span>
+            <span class="telemetry-val" id="top-amat" style="color:var(--accent-purple)">1.000</span>
           </div>
-          <div class="form-group">
-            <label for="assoc">Associativity</label>
-            <input type="number" id="assoc" value="4" min="1">
-          </div>
-          <div class="form-group">
-            <label for="policy">Replacement Policy</label>
-            <select id="policy">
-              <option value="LRU">LRU</option>
-              <option value="FIFO">FIFO</option>
-              <option value="RANDOM">RANDOM</option>
-            </select>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Total Accesses</span>
+            <span class="telemetry-val" id="top-accesses">0</span>
           </div>
 
-          <h3>Sequence File</h3>
-          <p class="small-text">
-            Upload a text file with lines like:
-            <code>Read 4 0x10</code> or <code>Write 4 32</code>
-          </p>
-          <div class="form-group">
-            <input type="file" id="seq-file" accept=".txt">
+          <div class="user-badge">
+            <div class="user-dot"></div>
+            <span id="user-info">guest</span>
           </div>
-          <div class="form-group">
-            <label for="seq-name">Sequence name (for logs)</label>
-            <input type="text" id="seq-name" placeholder="my_sequence.txt">
-          </div>
-          <button id="btn-run" class="btn primary full">Run Simulation</button>
-          <div id="run-message" class="message"></div>
 
-          <h3>Binary Values File</h3>
-          <button id="btn-binary-file" class="btn secondary full">View Binary File</button>
-
-          <hr style="border-color: #333; margin: 15px 0;">
-
-          <h3>Hardware Control</h3>
-          <p class="small-text">Run <code>iverilog</code> on server using <code>cache_sim_tb.v</code></p>
-          <button id="btn-run-verilog" class="btn primary full" style="background: linear-gradient(135deg, #00b2ff, #0056b3); border-color: #0077cc;">
-             Run Verilog TB
+          <button id="btn-logout" class="btn secondary small">
+            <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Logout
           </button>
         </div>
+      </header>
 
-        <div class="right-panel">
-          <div class="tabs">
-            <button class="tab-btn active" data-tab="results-tab">Results</button>
-            <button class="tab-btn" data-tab="truth-tab">Truth Table</button>
-            <button class="tab-btn" data-tab="logic-tab">Hierarchy / Logic</button>
-            <button class="tab-btn" data-tab="tab-verilog">Hardware (Logs)</button>
-            <button class="tab-btn" data-tab="waveform-tab">Waveform Viewer</button>
-            <button class="tab-btn admin-only" data-tab="admin-tab">Admin</button>
-          </div>
-
-          <div class="tab-panel active" id="results-tab">
-            <h2>Access Log</h2>
-            <pre id="results-area" class="code-area"></pre>
-            <h2>Statistics</h2>
-            <pre id="stats-area" class="code-area"></pre>
-            <h2>Charts</h2>
-            <div class="charts-row">
-              <canvas id="hit-miss-chart"></canvas>
-            </div>
-            <h2>Cache Sets</h2>
-            <pre id="sets-area" class="code-area"></pre>
-          </div>
-
-          <div class="tab-panel" id="truth-tab">
-            <h2>Truth Table (Recent Accesses)</h2>
-            <table id="truth-table">
-              <thead>
-                <tr>
-                  <th>Address</th>
-                  <th>Tag</th>
-                  <th>Set</th>
-                  <th>Valid</th>
-                  <th>TagMatch</th>
-                  <th>Output</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-
-          <div class="tab-panel" id="logic-tab">
-            <h2>Interactive Logic Circuit</h2>
-            <p class="small-text">
-              Click a row in the <strong>Truth Table</strong> tab to see how the gates and data flow change.
-            </p>
-            
-            <div id="logic-diagram" class="logic-circuit-container">
-              <div id="logic-header" class="circuit-header">
-                Select a row in the Truth Table to view state...
-              </div>
-
-              <div class="circuit-layout">
-                <svg class="circuit-wires" viewBox="0 0 800 300">
-                  <path id="path-tag" d="M 160 80 L 300 130" class="wire-path" />
-                  <path id="path-valid" d="M 160 220 L 300 170" class="wire-path" />
-                  <path id="path-and" d="M 420 150 L 520 150" class="wire-path" />
-                  <path id="path-mux" d="M 640 150 L 700 150" class="wire-path" />
-                </svg>
-
-                <div class="component-box input-box" id="box-tag" style="top: 50px; left: 20px;">
-                  <div class="label">TAG MATCH</div>
-                  <div class="value" id="val-tag">0</div>
-                </div>
-
-                <div class="component-box input-box" id="box-valid" style="top: 190px; left: 20px;">
-                  <div class="label">VALID BIT</div>
-                  <div class="value" id="val-valid">0</div>
-                </div>
-
-                <div class="component-box gate-box" id="box-and" style="top: 120px; left: 300px;">
-                  <div class="label-large">AND</div>
-                  <div class="sub-label" id="val-and">0</div>
-                </div>
-
-                <div class="component-box gate-box" id="box-mux" style="top: 120px; left: 520px;">
-                  <div class="label-large">MUX</div>
-                  <div class="sub-label" id="val-mux">0</div>
-                </div>
-
-                <div class="component-box output-box" id="box-out" style="top: 125px; left: 700px;">
-                  <div class="label">OUTPUT</div>
-                  <div class="value" id="val-out">MISS</div>
-                </div>
-              </div>
+      <!-- Main Workstation Layout -->
+      <div class="layout">
+        
+        <!-- Left Parameter & Sequence Sidebar -->
+        <aside class="left-panel">
+          
+          <!-- Cache Architecture Parameters Card -->
+          <div class="card">
+            <div class="section-label">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>
+              Cache Architecture
             </div>
 
-            <h2 style="margin-top:16px;">Hierarchy Demo (L1 / L2 Stats)</h2>
-            <div class="buttons" style="justify-content:flex-start;margin-top:4px;">
-              <button id="btn-run-hierarchy" class="btn primary small">Run Hierarchy Demo</button>
-            </div>
-            <pre id="hierarchy-results" class="code-area small" style="margin-top:8px;"></pre>
-          </div>
-
-          <div class="tab-panel" id="tab-verilog">
-             <h2>Hardware Simulation Logs</h2>
-             <div class="card" style="padding: 0; background: transparent; border: none;">
-                <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
-                    <strong>Simulator Terminal (Verilog TestBench)</strong>
-                    <span class="small-text">Source: cache_sim_tb.v</span>
-                </div>
-                <pre id="verilog-area" class="code-area" style="height: 500px; color: #00ffff; background-color: #001a1a; border: 1px solid #004d4d;">
-Click "Run Verilog TB" in the left panel to execute the hardware testbench.
-                </pre>
-             </div>
-          </div>
-
-          <div class="tab-panel" id="waveform-tab">
-            <h2>Hardware Timing Diagram (Visualizer)</h2>
-            <div class="card" style="background: white; overflow-x: auto; padding: 10px;">
-                <script type="WaveDrom">
-                { signal : [
-                  { name: "clk",  wave: "p......." },
-                  { name: "addr", wave: "x34567x", data: ["0x10","0x20","0x40","0x50","0x60"] },
-                  { name: "l1_hit",  wave: "0.1.0..10" },
-                  { name: "l1_miss", wave: "0..1....." },
-                  { name: "l2_hit",  wave: "0..1....." },
-                  { name: "mem_acc", wave: "0...1...." }
-                ]}
-                </script>
-            </div>
-            
-            <div style="margin-top: 20px;">
-                <h3>Detailed Analysis</h3>
-                <p class="small-text">
-                    The diagram above is a visualization of the testbench logic. 
-                    To view the actual, nanosecond-precise simulation output generated by Icarus Verilog:
-                </p>
-                <a href="/api/download_vcd" target="_blank" class="btn secondary">Download .vcd File</a>
-                <p class="small-text" style="margin-top:5px; color: #888;">
-                    (Open this file in GTKWave or VS Code WaveTrace extension)
-                </p>
-            </div>
-          </div>
-
-          <div class="tab-panel" id="admin-tab">
-            <h2>Admin Panel</h2>
-            <div class="admin-section">
-              <h3>Activity Logs</h3>
-              <button id="btn-refresh-logs" class="btn secondary small">Refresh Logs</button>
-              <pre id="logs-area" class="code-area small"></pre>
-            </div>
-            <div class="admin-section">
-              <h3>Manage Users</h3>
-              <button id="btn-refresh-users" class="btn secondary small">Refresh Users</button>
-              <table id="users-table">
-                <thead>
-                  <tr><th>Username</th><th>Role</th><th>Actions</th></tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-              <h4>Create User</h4>
-              <div class="grid-3">
-                <input type="text" id="admin-new-username" placeholder="Username">
-                <input type="password" id="admin-new-password" placeholder="Password">
-                <select id="admin-new-role">
-                  <option value="guest">Guest</option>
-                  <option value="admin">Admin</option>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cache-size">Cache Size (Bytes)</label>
+                <select id="cache-size">
+                  <option value="256">256 B</option>
+                  <option value="512">512 B</option>
+                  <option value="1024" selected>1 KB (1024 B)</option>
+                  <option value="2048">2 KB (2048 B)</option>
+                  <option value="4096">4 KB (4096 B)</option>
+                  <option value="8192">8 KB (8192 B)</option>
+                  <option value="32768">32 KB (32768 B)</option>
                 </select>
               </div>
-              <button id="btn-admin-create-user" class="btn primary small">Create</button>
+
+              <div class="form-group">
+                <label for="block-size">Block Size (Bytes)</label>
+                <select id="block-size">
+                  <option value="4" selected>4 Bytes (1 Word)</option>
+                  <option value="8">8 Bytes (2 Words)</option>
+                  <option value="16">16 Bytes (4 Words)</option>
+                  <option value="32">32 Bytes (8 Words)</option>
+                  <option value="64">64 Bytes (16 Words)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="assoc">Associativity</label>
+                <select id="assoc">
+                  <option value="1">Direct Mapped (1-Way)</option>
+                  <option value="2">2-Way Set Assoc</option>
+                  <option value="4" selected>4-Way Set Assoc</option>
+                  <option value="8">8-Way Set Assoc</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="policy">Replacement</label>
+                <select id="policy">
+                  <option value="LRU" selected>LRU (Least Recently Used)</option>
+                  <option value="FIFO">FIFO (First In First Out)</option>
+                  <option value="RANDOM">RANDOM</option>
+                </select>
+              </div>
             </div>
           </div>
 
-        </div>
+          <!-- Memory Sequence Generator & Trace Editor Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="section-label" style="margin-bottom:0;">
+                <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Memory Access Trace
+              </div>
+              <button id="btn-open-gen-modal" class="btn secondary small" title="Generate synthetic access benchmarks">
+                <svg class="icon-svg sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                Auto Generate
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label for="seq-text" style="display:flex; justify-content:space-between;">
+                <span>Trace Instructions (Read/Write Size Addr)</span>
+                <span id="seq-line-count" class="mono-font" style="font-size:11px; color:var(--text-muted);">0 lines</span>
+              </label>
+              <textarea id="seq-text" rows="7" placeholder="Read 4 0x1000&#10;Write 4 0x1004&#10;Read 4 0x1000"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="seq-file" style="font-size:11px;">Upload File (.txt)</label>
+                <input type="file" id="seq-file" accept=".txt">
+              </div>
+              <div class="form-group">
+                <label for="seq-preset-select" style="font-size:11px;">Quick Benchmark</label>
+                <select id="seq-preset-select">
+                  <option value="">-- Load Preset --</option>
+                  <option value="spatial">Spatial Stride (Array Scan)</option>
+                  <option value="temporal">Temporal Loop (High Hits)</option>
+                  <option value="matrix_row">Matrix Row-Major (Cache-Friendly)</option>
+                  <option value="matrix_col">Matrix Col-Major (Cache-Misses)</option>
+                  <option value="conflict">Set Conflict & Thrashing</option>
+                  <option value="random">Random Distribution</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:8px;">
+              <button id="btn-run" class="btn primary full">
+                <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Simulate Cache
+              </button>
+              <button id="btn-export-seq" class="btn secondary icon-only" title="Download Sequence as .txt">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              </button>
+            </div>
+            <div id="run-message" class="message"></div>
+          </div>
+
+          <!-- Quick Single-Access Probe Card -->
+          <div class="card">
+            <div class="section-label">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              Single Address Probe
+            </div>
+            <div style="display:grid; grid-template-columns: 80px 1fr 70px; gap:8px;">
+              <select id="probe-op">
+                <option value="Read">Read</option>
+                <option value="Write">Write</option>
+              </select>
+              <input type="text" id="probe-addr" placeholder="0x10A0" value="0x1000">
+              <button id="btn-probe" class="btn secondary small">Probe</button>
+            </div>
+          </div>
+
+          <!-- Hardware & Verilog Control Card -->
+          <div class="card">
+            <div class="section-label">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>
+              Hardware Verilog Verification
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">
+              Compiles and runs IEEE-1364 hardware testbench (<code>cache_sim_tb.v</code>).
+            </p>
+            <div style="display:flex; gap:8px;">
+              <button id="btn-run-verilog" class="btn primary full" style="background: linear-gradient(135deg, #0284c7, #2563eb);">
+                <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                Execute Verilog Testbench
+              </button>
+              <button id="btn-binary-file" class="btn secondary" title="View binary cache store">
+                Binary Log
+              </button>
+            </div>
+          </div>
+
+        </aside>
+
+        <!-- Right Main Interactive Workspace -->
+        <main class="right-panel">
+
+          <!-- Workspace Tabs Bar -->
+          <nav class="tabs-container">
+            <button class="tab-btn active" data-tab="tab-inspector">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Cache Sets & Inspector
+            </button>
+            <button class="tab-btn" data-tab="tab-decoder">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+              32-Bit Address Decoder
+            </button>
+            <button class="tab-btn" data-tab="tab-circuit">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              Hardware Logic Circuit
+            </button>
+            <button class="tab-btn" data-tab="tab-analytics">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              Performance & AMAT
+            </button>
+            <button class="tab-btn" data-tab="tab-hierarchy">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              Hierarchy (L1/L2/DRAM)
+            </button>
+            <button class="tab-btn" data-tab="tab-verilog">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+              Hardware Terminal
+            </button>
+            <button class="tab-btn" data-tab="tab-waveform">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+              Waveform Viewer
+            </button>
+            <button class="tab-btn admin-only" data-tab="tab-admin" style="display:none;">
+              <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              Admin Security
+            </button>
+          </nav>
+
+          <!-- ================================================================
+               TAB 1: VISUAL CACHE INSPECTOR & STEP-BY-STEP PLAYBACK
+               ================================================================ -->
+          <div class="tab-panel active" id="tab-inspector">
+            
+            <!-- Step-by-Step Playback Controller -->
+            <div class="playback-bar">
+              <div class="playback-controls">
+                <button id="btn-step-start" class="btn secondary icon-only" title="Jump to start">
+                  <svg class="icon-svg sm" viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+                </button>
+                <button id="btn-step-prev" class="btn secondary icon-only" title="Previous step">
+                  <svg class="icon-svg sm" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                </button>
+                <button id="btn-step-play" class="btn primary icon-only" title="Play simulation">
+                  <svg id="icon-play" class="icon-svg sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <svg id="icon-pause" class="icon-svg sm" viewBox="0 0 24 24" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button id="btn-step-next" class="btn secondary icon-only" title="Next step">
+                  <svg class="icon-svg sm" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                </button>
+                <button id="btn-step-end" class="btn secondary icon-only" title="Jump to end">
+                  <svg class="icon-svg sm" viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+                </button>
+              </div>
+
+              <div class="timeline-scrubber">
+                <span class="step-indicator">Step <span id="current-step-num">0</span> / <span id="total-steps-num">0</span></span>
+                <input type="range" id="step-slider" min="0" max="0" value="0">
+              </div>
+
+              <div class="speed-control">
+                <span>Speed:</span>
+                <select id="play-speed">
+                  <option value="1000">0.5x (1.0s)</option>
+                  <option value="500" selected>1.0x (0.5s)</option>
+                  <option value="250">2.0x (0.25s)</option>
+                  <option value="100">5.0x (0.1s)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Active Step Telemetry Card -->
+            <div class="card" style="background:var(--bg-card-subtle);">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <span class="section-label" style="margin-bottom:2px;">Current Access Event</span>
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+                    <span id="active-op-badge" class="badge neutral">-</span>
+                    <span id="active-addr-display" class="mono-font" style="font-size:16px; font-weight:700;">No active simulation</span>
+                  </div>
+                </div>
+
+                <div style="display:flex; gap:16px; align-items:center;">
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Target Set</span>
+                    <span class="telemetry-val" id="active-set-val" style="color:var(--accent-purple)">Set 0</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Address Tag</span>
+                    <span class="telemetry-val" id="active-tag-val" style="color:var(--accent-cyan)">0x0</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Result Status</span>
+                    <span id="active-result-badge" class="badge neutral">IDLE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Cache Sets Grid -->
+            <div class="cache-matrix-container">
+              <table class="cache-table" id="cache-matrix-table">
+                <thead>
+                  <tr id="cache-matrix-header">
+                    <th style="width: 80px;">Set Index</th>
+                    <th>Way 0</th>
+                    <th>Way 1</th>
+                    <th>Way 2</th>
+                    <th>Way 3</th>
+                  </tr>
+                </thead>
+                <tbody id="cache-matrix-body">
+                  <tr>
+                    <td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">
+                      Run a simulation or execute a single probe to inspect cache sets.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Access Trace Log Table -->
+            <div class="card">
+              <div class="card-header">
+                <div class="section-label" style="margin-bottom:0;">Full Access Sequence Log</div>
+                <span id="trace-summary-badge" class="badge neutral">0 Events</span>
+              </div>
+              <div style="max-height: 220px; overflow-y: auto;">
+                <table class="cache-table" id="access-log-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 60px;">#</th>
+                      <th>Op</th>
+                      <th>Address</th>
+                      <th>Tag</th>
+                      <th>Set</th>
+                      <th>Way</th>
+                      <th>Outcome</th>
+                      <th>Eviction</th>
+                    </tr>
+                  </thead>
+                  <tbody id="access-log-body">
+                    <tr>
+                      <td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">
+                        No access logs recorded.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================================================================
+               TAB 2: 32-BIT ADDRESS DECODER
+               ================================================================ -->
+          <div class="tab-panel" id="tab-decoder">
+            <div class="address-decoder-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg class="icon-svg" viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                  32-Bit Memory Address Breakdown
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="small-text">Input Address:</span>
+                  <input type="text" id="decoder-input-addr" value="0x10A4" style="width:140px; padding:4px 8px; font-size:12px;">
+                </div>
+              </div>
+
+              <p style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
+                In a 32-bit architecture, every memory reference is decomposed into three distinct fields: Tag bits (for identity match), Set Index bits (to select cache row), and Block Offset bits (for byte alignment inside block).
+              </p>
+
+              <!-- Dynamic Bit Fields Visualizer -->
+              <div class="bit-fields-container" id="decoder-bit-container">
+                <div class="bit-field tag-field">
+                  <div class="bit-field-header">
+                    <span class="bit-field-name">Tag Field</span>
+                    <span class="bit-field-range" id="decoder-tag-range">[31:8] (24 bits)</span>
+                  </div>
+                  <div class="bit-field-val" id="decoder-tag-val">0x000010</div>
+                  <div class="bit-field-bin" id="decoder-tag-bin">0000 0000 0000 0000 0001 0000</div>
+                </div>
+
+                <div class="bit-field index-field">
+                  <div class="bit-field-header">
+                    <span class="bit-field-name">Set Index</span>
+                    <span class="bit-field-range" id="decoder-index-range">[7:2] (6 bits)</span>
+                  </div>
+                  <div class="bit-field-val" id="decoder-index-val">Set 41 (0x29)</div>
+                  <div class="bit-field-bin" id="decoder-index-bin">10 1001</div>
+                </div>
+
+                <div class="bit-field offset-field">
+                  <div class="bit-field-header">
+                    <span class="bit-field-name">Block Offset</span>
+                    <span class="bit-field-range" id="decoder-offset-range">[1:0] (2 bits)</span>
+                  </div>
+                  <div class="bit-field-val" id="decoder-offset-val">0x0 (Byte 0)</div>
+                  <div class="bit-field-bin" id="decoder-offset-bin">00</div>
+                </div>
+              </div>
+
+              <!-- Mathematical Breakdown Cards -->
+              <div class="metrics-grid" style="margin-top:20px;">
+                <div class="metric-card">
+                  <span class="metric-title">Total Cache Blocks</span>
+                  <span class="metric-value" id="math-total-blocks">256</span>
+                  <span class="metric-sub">Cache Size / Block Size</span>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-title">Number of Sets</span>
+                  <span class="metric-value" id="math-total-sets">64</span>
+                  <span class="metric-sub">Total Blocks / Associativity</span>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-title">Tag Bits</span>
+                  <span class="metric-value" id="math-tag-bits">24</span>
+                  <span class="metric-sub">32 - Index - Offset</span>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-title">Offset Bits</span>
+                  <span class="metric-value" id="math-offset-bits">2</span>
+                  <span class="metric-sub">log2(Block Size)</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ================================================================
+               TAB 3: HARDWARE LOGIC CIRCUIT SCHEMATIC
+               ================================================================ -->
+          <div class="tab-panel" id="tab-circuit">
+            <div class="circuit-card">
+              <div class="circuit-header">
+                <div>
+                  <strong>Hardware Cache Controller Logic</strong>
+                  <span id="circuit-status-sub" style="color:var(--text-muted); margin-left:10px;">Select any event or step to trace digital signals</span>
+                </div>
+                <span id="circuit-active-badge" class="badge hit">TAG MATCH == 1 & VALID == 1</span>
+              </div>
+
+              <div class="circuit-viewport">
+                <svg class="circuit-svg" viewBox="0 0 850 260">
+                  <!-- Wires -->
+                  <path id="wire-addr-tag" class="circuit-wire" d="M 60 70 L 260 70" />
+                  <path id="wire-cache-tag" class="circuit-wire" d="M 60 110 L 260 110" />
+                  <path id="wire-comparator-out" class="circuit-wire" d="M 380 90 L 520 90 L 520 120" />
+                  
+                  <path id="wire-valid-bit" class="circuit-wire" d="M 60 180 L 520 180 L 520 140" />
+                  <path id="wire-and-out" class="circuit-wire" d="M 600 130 L 710 130" />
+
+                  <!-- Gate 1: Tag Comparator -->
+                  <rect id="gate-comparator" class="circuit-gate" x="260" y="55" width="120" height="70" rx="6" />
+                  <text class="circuit-text title" x="280" y="85">EQUAL ==</text>
+                  <text class="circuit-text val" id="circuit-val-tagmatch" x="280" y="105">Match: 1</text>
+
+                  <!-- Labels for inputs -->
+                  <rect class="circuit-gate" x="10" y="50" width="100" height="35" rx="4" />
+                  <text class="circuit-text title" x="18" y="72">ADDR TAG</text>
+                  
+                  <rect class="circuit-gate" x="10" y="95" width="100" height="35" rx="4" />
+                  <text class="circuit-text title" x="18" y="117">SET TAG</text>
+
+                  <rect class="circuit-gate" x="10" y="160" width="100" height="40" rx="4" />
+                  <text class="circuit-text title" x="18" y="180">VALID BIT</text>
+                  <text class="circuit-text val" id="circuit-val-valid" x="18" y="193">Val: 1</text>
+
+                  <!-- Gate 2: Hit Decision AND Gate -->
+                  <rect id="gate-and" class="circuit-gate" x="520" y="105" width="80" height="50" rx="6" />
+                  <text class="circuit-text title" x="545" y="135">AND</text>
+
+                  <!-- Gate 3: Hit / Miss Output Latch -->
+                  <rect id="gate-output" class="circuit-gate" x="710" y="100" width="120" height="60" rx="6" />
+                  <text class="circuit-text title" x="735" y="125">STATUS</text>
+                  <text class="circuit-text val" id="circuit-val-output" x="735" y="145" style="font-size:14px; fill:var(--hit-green);">HIT</text>
+                </svg>
+              </div>
+
+              <!-- Interactive Truth Table for Recent Accesses -->
+              <div style="margin-top:16px;">
+                <div class="section-label">Digital Truth Table (Click row to propagate signals)</div>
+                <div style="max-height: 180px; overflow-y: auto;">
+                  <table class="cache-table" id="truth-table">
+                    <thead>
+                      <tr>
+                        <th>Address</th>
+                        <th>Tag</th>
+                        <th>Set</th>
+                        <th>Valid Bit</th>
+                        <th>Tag Match</th>
+                        <th>Hit / Miss</th>
+                      </tr>
+                    </thead>
+                    <tbody id="truth-table-body">
+                      <tr>
+                        <td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">
+                          No accesses yet.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================================================================
+               TAB 4: PERFORMANCE & AMAT CALCULATOR
+               ================================================================ -->
+          <div class="tab-panel" id="tab-analytics">
+            
+            <!-- Summary Metric Cards -->
+            <div class="metrics-grid">
+              <div class="metric-card hit-card">
+                <span class="metric-title">Cache Hits</span>
+                <span class="metric-value" id="analytics-hits" style="color:var(--hit-green)">0</span>
+                <span class="metric-sub" id="analytics-read-write-hits">Reads: 0 | Writes: 0</span>
+              </div>
+              <div class="metric-card miss-card">
+                <span class="metric-title">Cache Misses</span>
+                <span class="metric-value" id="analytics-misses" style="color:var(--miss-red)">0</span>
+                <span class="metric-sub" id="analytics-read-write-misses">Reads: 0 | Writes: 0</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-title">Hit Ratio</span>
+                <span class="metric-value" id="analytics-hit-rate">0.0%</span>
+                <span class="metric-sub">Hits / Total Accesses</span>
+              </div>
+              <div class="metric-card amat-card">
+                <span class="metric-title">AMAT (Cycles)</span>
+                <span class="metric-value" id="analytics-amat" style="color:var(--accent-purple)">1.000</span>
+                <span class="metric-sub">Avg Memory Access Time</span>
+              </div>
+            </div>
+
+            <!-- AMAT Sensitivity Analysis Card -->
+            <div class="card">
+              <div class="card-title" style="margin-bottom:12px;">
+                <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Average Memory Access Time (AMAT) Parameter Sliders
+              </div>
+              <p style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
+                <code>AMAT = Hit Time + (Miss Rate &times; Miss Penalty)</code>
+              </p>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="slider-hit-time" style="display:flex; justify-content:space-between;">
+                    <span>Hit Time (L1 Cycles)</span>
+                    <span id="val-hit-time" class="mono-font" style="color:var(--accent-cyan)">1 Cycle</span>
+                  </label>
+                  <input type="range" id="slider-hit-time" min="1" max="5" value="1">
+                </div>
+
+                <div class="form-group">
+                  <label for="slider-miss-penalty" style="display:flex; justify-content:space-between;">
+                    <span>Miss Penalty (DRAM Latency)</span>
+                    <span id="val-miss-penalty" class="mono-font" style="color:var(--miss-red)">50 Cycles</span>
+                  </label>
+                  <input type="range" id="slider-miss-penalty" min="10" max="200" value="50">
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              <div class="card">
+                <div class="section-label">Hit / Miss Distribution</div>
+                <div style="height: 220px; position: relative;">
+                  <canvas id="chart-hit-miss"></canvas>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section-label">Hit Rate Convergence (%)</div>
+                <div style="height: 220px; position: relative;">
+                  <canvas id="chart-timeline"></canvas>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================================================================
+               TAB 5: MULTI-LEVEL HIERARCHY SIMULATOR (L1 / L2 / DRAM)
+               ================================================================ -->
+          <div class="tab-panel" id="tab-hierarchy">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                  Two-Level Hierarchical Cache Simulator
+                </div>
+                <button id="btn-run-hier-sim" class="btn primary small">
+                  Simulate Current Trace on L1/L2
+                </button>
+              </div>
+
+              <p style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
+                Simulates multi-tier memory hierarchy: Fast L1 Cache (32KB, 4-Way) &rarr; Intermediate L2 Cache (256KB, 8-Way) &rarr; Backing DRAM Main Memory with Write-Back policy.
+              </p>
+
+              <!-- Multi-Level Telemetry Cards -->
+              <div class="metrics-grid" style="margin-bottom:16px;">
+                <div class="metric-card">
+                  <span class="metric-title">L1 Cache Hit Rate</span>
+                  <span class="metric-value" id="hier-l1-hr" style="color:var(--hit-green)">--</span>
+                  <span class="metric-sub" id="hier-l1-hits">Hits: 0 / 0</span>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-title">L2 Cache Hit Rate</span>
+                  <span class="metric-value" id="hier-l2-hr" style="color:var(--accent-cyan)">--</span>
+                  <span class="metric-sub" id="hier-l2-hits">Hits: 0 / 0</span>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-title">L2 Write-Backs</span>
+                  <span class="metric-value" id="hier-writebacks" style="color:var(--warn-amber)">0</span>
+                  <span class="metric-sub">DRAM Flushes</span>
+                </div>
+                <div class="metric-card amat-card">
+                  <span class="metric-title">Hierarchical AMAT</span>
+                  <span class="metric-value" id="hier-amat" style="color:var(--accent-purple)">--</span>
+                  <span class="metric-sub">L1 + L1_MR &times; (L2 + L2_MR &times; Mem)</span>
+                </div>
+              </div>
+
+              <!-- Hierarchy Trace Table -->
+              <div class="section-label">Hierarchy Memory Request Pipeline</div>
+              <div style="max-height: 250px; overflow-y: auto;">
+                <table class="cache-table" id="hier-trace-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px;">#</th>
+                      <th>Operation</th>
+                      <th>Address</th>
+                      <th>L1 Result</th>
+                      <th>L2 Result</th>
+                      <th>Serviced By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hier-trace-body">
+                    <tr>
+                      <td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">
+                        Click "Simulate Current Trace on L1/L2" to inspect multi-level hierarchy flow.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================================================================
+               TAB 6: HARDWARE SIMULATION LOGS (VERILOG TESTBENCH)
+               ================================================================ -->
+          <div class="tab-panel" id="tab-verilog">
+            <div class="terminal-card">
+              <div class="terminal-header">
+                <div>
+                  <span style="font-weight:700; color:var(--text-primary);">Verilog Simulation Output (Icarus Verilog Engine)</span>
+                  <span style="margin-left:8px; color:var(--text-muted);">cache_sim_tb.v</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button id="btn-re-run-verilog" class="btn secondary small" style="padding:2px 8px; font-size:11px;">Re-run</button>
+                  <a href="/api/download_vcd" target="_blank" class="btn secondary small" style="padding:2px 8px; font-size:11px; text-decoration:none;">Download VCD</a>
+                </div>
+              </div>
+              <pre class="terminal-body" id="verilog-terminal">Click "Execute Verilog Testbench" in the sidebar to compile hardware source files.</pre>
+            </div>
+          </div>
+
+          <!-- ================================================================
+               TAB 7: WAVEFORM VIEWER (WAVEDROM)
+               ================================================================ -->
+          <div class="tab-panel" id="tab-waveform">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                  Hardware Signal Timing Diagram (WaveDrom)
+                </div>
+                <a href="/api/download_vcd" target="_blank" class="btn secondary small" style="text-decoration:none;">
+                  Export .vcd Waveform
+                </a>
+              </div>
+
+              <div style="background:#ffffff; border-radius:var(--radius-md); padding:16px; overflow-x:auto;">
+                <script type="WaveDrom">
+                { signal : [
+                  { name: "clk",      wave: "p......." },
+                  { name: "rst_n",    wave: "01......" },
+                  { name: "addr",     wave: "x34567x", data: ["0x10","0x20","0x40","0x50","0x60"] },
+                  { name: "l1_hit",   wave: "0.1.0..10" },
+                  { name: "l1_miss",  wave: "0..1....." },
+                  { name: "l2_hit",   wave: "0..1....." },
+                  { name: "mem_acc",  wave: "0...1...." }
+                ]}
+                </script>
+              </div>
+
+              <p style="font-size:12px; color:var(--text-muted); margin-top:14px;">
+                Timing diagram visualized above captures clock edges, address busses, and Hit/Miss strobe signals from the synthesized hardware controller. Download the raw <code>.vcd</code> file to inspect high-resolution waveforms in GTKWave or VS Code.
+              </p>
+            </div>
+          </div>
+
+          <!-- ================================================================
+               TAB 8: ADMIN & SECURITY PANEL
+               ================================================================ -->
+          <div class="tab-panel admin-only" id="tab-admin" style="display:none;">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:16px;">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Security Integrity & User Management
+              </div>
+
+              <div class="form-row" style="margin-bottom:20px;">
+                <div>
+                  <div class="section-label">System Integrity</div>
+                  <p style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                    Users database protected with HMAC-SHA256 signature (<code>users.hmac</code>) and 32-byte binary secret key.
+                  </p>
+                  <span class="badge hit">HMAC VERIFICATION: PASSED</span>
+                </div>
+
+                <div>
+                  <div class="section-label">Create User Account</div>
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <input type="text" id="admin-new-user" placeholder="Username">
+                    <input type="password" id="admin-new-pass" placeholder="Password">
+                    <div style="display:flex; gap:8px;">
+                      <select id="admin-new-role" style="width:120px;">
+                        <option value="guest">Guest</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button id="btn-admin-create" class="btn primary small full">Create</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-label">Active Users</div>
+              <div style="max-height: 160px; overflow-y: auto; margin-bottom:20px;">
+                <table class="cache-table" id="admin-users-table">
+                  <thead>
+                    <tr><th>Username</th><th>Role</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+
+              <div class="section-label">Decoded Activity Audit Logs</div>
+              <button id="btn-refresh-logs" class="btn secondary small" style="margin-bottom:8px;">Refresh Logs</button>
+              <pre class="terminal-body" id="admin-logs-area" style="max-height:160px;"></pre>
+            </div>
+          </div>
+
+        </main>
       </div>
     </section>
+
+    <!-- ====================================================================
+         MODAL 1: SYNTHETIC SEQUENCE & BENCHMARK GENERATOR
+         ==================================================================== -->
+    <div id="gen-modal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title">
+            <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            Automated Memory Sequence Generator
+          </div>
+          <button id="btn-close-gen-modal" class="btn secondary icon-only">&times;</button>
+        </div>
+
+        <p style="font-size:12px; color:var(--text-secondary);">
+          Generate synthetic memory access traces to demonstrate computer architecture concepts like spatial locality, cache conflict thrashing, and matrix traversal optimizations.
+        </p>
+
+        <!-- Benchmark Preset Grid -->
+        <div class="preset-grid">
+          <div class="preset-card selected" data-pattern="sequential">
+            <span class="preset-card-title">Sequential Streaming</span>
+            <span class="preset-card-desc">Contiguous array access testing spatial locality & stride hit behavior.</span>
+          </div>
+          <div class="preset-card" data-pattern="temporal_loop">
+            <span class="preset-card-title">Temporal Locality Loop</span>
+            <span class="preset-card-desc">Repeated loops over working set fitting inside cache (90%+ Hit Rate).</span>
+          </div>
+          <div class="preset-card" data-pattern="matrix_row_major">
+            <span class="preset-card-title">Matrix Row-Major</span>
+            <span class="preset-card-desc">2D array scan row-by-row matching contiguous memory layout.</span>
+          </div>
+          <div class="preset-card" data-pattern="matrix_col_major">
+            <span class="preset-card-title">Matrix Col-Major</span>
+            <span class="preset-card-desc">Column stride jumps demonstrating cache miss penalties.</span>
+          </div>
+          <div class="preset-card" data-pattern="conflict_thrash">
+            <span class="preset-card-title">Cache Conflict Thrash</span>
+            <span class="preset-card-desc">Targets identical set indices to induce repeated LRU line evictions.</span>
+          </div>
+          <div class="preset-card" data-pattern="random">
+            <span class="preset-card-title">Random Distribution</span>
+            <span class="preset-card-desc">Uniformly distributed addresses across full memory space.</span>
+          </div>
+        </div>
+
+        <!-- Parameter Controls for Generator -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gen-count">Number of Operations</label>
+            <input type="number" id="gen-count" value="40" min="10" max="500">
+          </div>
+          <div class="form-group">
+            <label for="gen-start-addr">Start Base Address</label>
+            <input type="text" id="gen-start-addr" value="0x1000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gen-stride">Stride (Bytes)</label>
+            <input type="number" id="gen-stride" value="4" min="1">
+          </div>
+          <div class="form-group">
+            <label for="gen-read-ratio">Read / Write Ratio</label>
+            <select id="gen-read-ratio">
+              <option value="1.0">100% Reads</option>
+              <option value="0.8" selected>80% Reads / 20% Writes</option>
+              <option value="0.5">50% Reads / 50% Writes</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+          <button id="btn-cancel-gen" class="btn secondary">Cancel</button>
+          <button id="btn-apply-gen" class="btn primary">Generate & Load into Simulator</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL 2: USER REGISTRATION
+         ==================================================================== -->
+    <div id="register-dialog" class="modal-overlay hidden">
+      <div class="modal-box" style="max-width:380px;">
+        <div class="modal-header">
+          <div class="modal-title">Create Guest Account</div>
+          <button id="btn-cancel-register" class="btn secondary icon-only">&times;</button>
+        </div>
+        <div class="form-group">
+          <label for="reg-username">Username</label>
+          <input type="text" id="reg-username">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password (Min 4 chars)</label>
+          <input type="password" id="reg-password">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button id="btn-close-reg" class="btn secondary">Cancel</button>
+          <button id="btn-register" class="btn primary">Register</button>
+        </div>
+        <div id="reg-message" class="message"></div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
   </div>
 
   <script src="/static/app.js"></script>
