@@ -672,17 +672,18 @@ def generate_memory_trace(pattern: str, params: Dict[str, Any]) -> Tuple[str, st
 # ---------------------------------------------------------------------------
 
 def make_token(username: str, role: str) -> str:
-    payload = json.dumps({"u": username, "r": role, "t": datetime.now().timestamp()}, separators=(",", ":")).encode("utf-8")
-    sig = hmac.new(APP_SECRET, payload, hashlib.sha256).digest()
-    return base64.urlsafe_b64encode(payload + b"." + sig).decode("ascii")
+    payload = json.dumps({"u": username, "r": role, "t": int(datetime.now().timestamp())}, separators=(",", ":")).encode("utf-8")
+    sig = hmac.new(APP_SECRET, payload, hashlib.sha256).hexdigest().encode("ascii")
+    b64_payload = base64.urlsafe_b64encode(payload)
+    return (b64_payload + b"." + sig).decode("ascii")
 
 
 def parse_token(token: str) -> Tuple[str, str] | Tuple[None, None]:
     try:
-        raw = base64.urlsafe_b64decode(token.encode("ascii"))
-        payload, sig = raw.rsplit(b".", 1)
-        expected = hmac.new(APP_SECRET, payload, hashlib.sha256).digest()
-        if not hmac.compare_digest(expected, sig):
+        b64_payload, sig_hex = token.encode("ascii").split(b".", 1)
+        payload = base64.urlsafe_b64decode(b64_payload)
+        expected = hmac.new(APP_SECRET, payload, hashlib.sha256).hexdigest().encode("ascii")
+        if not hmac.compare_digest(expected, sig_hex):
             return None, None
         data = json.loads(payload.decode("utf-8"))
         return data["u"], data["r"]
