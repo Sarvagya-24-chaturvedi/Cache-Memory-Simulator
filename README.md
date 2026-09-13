@@ -1,6 +1,96 @@
-# Cache Memory Simulator & Hardware Verifier
+# CacheMap — Cache Memory Simulator & Hardware Verifier
 
-An interactive, executive-grade computer architecture simulation and hardware verification platform. The simulator combines high-precision software cache state modeling with cycle-accurate Verilog hardware verification, automated memory trace generation, 32-bit address decomposition, and real-time AMAT (Average Memory Access Time) analytics.
+An interactive, executive-grade computer architecture simulation, hardware verification, and DevOps monitoring platform. **CacheMap** combines high-precision software cache state modeling with cycle-accurate Verilog hardware verification, automated memory trace generation, 32-bit address decomposition, real-time AMAT analytics, and a full observability stack (Docker, Nginx, Prometheus, Grafana).
+
+---
+
+## Proposed System Architecture
+
+```mermaid
+flowchart TD
+    %% ==========================================================
+    %% CLIENT-SIDE REQUIREMENTS (Dashed Cyan Border)
+    %% ==========================================================
+    subgraph ClientSide["Client-Side Requirements (Interactive Frontend Workstation)"]
+        UI_Nav["Top Bar Telemetry & AMAT Monitor"]
+        UI_Inspector["Interactive Step-by-Step Cache Inspector<br/>(Sets, Ways, LRU Status, Hit/Miss Highlight)"]
+        UI_Decoder["32-Bit Address Decoder<br/>[ Tag Bits | Set Index | Block Offset ]"]
+        UI_SeqGen["Synthetic Memory Trace Generator<br/>(Spatial, Temporal, Matrix, Thrash, Random)"]
+        UI_Circuit["Interactive Hardware Logic Circuit<br/>(Tag Comparator ==, Valid Gate, AND, MUX)"]
+        UI_Analytics["Performance Analytics & AMAT Calculator<br/>(Chart.js Hit Rate Timeline & Sliders)"]
+        UI_Waveform["WaveDrom Timing Waveform Visualizer"]
+    end
+
+    %% ==========================================================
+    %% SERVER-SIDE REQUIREMENTS (Dashed Emerald Border)
+    %% ==========================================================
+    subgraph ServerSide["Server-Side Requirements (Python & Hardware Engine)"]
+        WSGI_App["Flask / WSGI Server<br/>(web_backend.py & wsgi.py)"]
+        API_Auth["HMAC-SHA256 User Database<br/>(users.json, users.hmac, app_secret.bin)"]
+        Cache_Sim["Cycle & Step Cache Simulator<br/>(Single-Level & L1/L2/DRAM Hierarchy)"]
+        Seq_Engine["Trace Generator Engine<br/>(Stride, Matrix, Conflict Calculations)"]
+        Verilog_Runner["Hardware Verification Engine<br/>(Icarus Verilog + Emulation Fallback)"]
+        VCD_Gen["VCD Waveform File Generator<br/>(cache_waveform.vcd)"]
+    end
+
+    %% ==========================================================
+    %% CLOUD & DEVOPS INFRASTRUCTURE (Dashed Purple Border)
+    %% ==========================================================
+    subgraph DevOpsInfra["DevOps & Cloud Infrastructure Requirements"]
+        Reverse_Proxy["Nginx Reverse Proxy (:8080 -> :8000)"]
+        Prometheus_Mon["Prometheus Metrics Scraping (:9090)"]
+        Grafana_Dash["Grafana Telemetry Dashboard (:3000)"]
+        Docker_Container["Docker Containerization & Render Blueprint"]
+        CI_Pipeline["GitHub Actions CI/CD Pipeline"]
+    end
+
+    %% Connectors
+    UI_Nav --> WSGI_App
+    UI_SeqGen --> Seq_Engine
+    Seq_Engine --> UI_Inspector
+    UI_Inspector --> Cache_Sim
+    Cache_Sim --> UI_Decoder
+    Cache_Sim --> UI_Circuit
+    Cache_Sim --> UI_Analytics
+    WSGI_App --> API_Auth
+    WSGI_App --> Cache_Sim
+    WSGI_App --> Verilog_Runner
+    Verilog_Runner --> VCD_Gen
+    VCD_Gen --> UI_Waveform
+
+    Reverse_Proxy --> WSGI_App
+    WSGI_App --> Prometheus_Mon
+    Prometheus_Mon --> Grafana_Dash
+    Docker_Container --> Reverse_Proxy
+    CI_Pipeline --> Docker_Container
+
+    %% Subgraph Styles with Dashed Borders & Colorful Fills
+    style ClientSide fill:#0b192c,stroke:#38bdf8,stroke-width:3px,stroke-dasharray: 6 6,color:#38bdf8
+    style ServerSide fill:#062d22,stroke:#10b981,stroke-width:3px,stroke-dasharray: 6 6,color:#10b981
+    style DevOpsInfra fill:#1c1033,stroke:#a855f7,stroke-width:3px,stroke-dasharray: 6 6,color:#c084fc
+
+    %% Node Styles
+    style UI_Nav fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+    style UI_Inspector fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+    style UI_Decoder fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+    style UI_SeqGen fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+    style UI_Circuit fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+    style UI_Analytics fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+    style UI_Waveform fill:#0f2b48,stroke:#38bdf8,color:#f8fafc
+
+    style WSGI_App fill:#064e3b,stroke:#10b981,color:#f8fafc
+    style API_Auth fill:#064e3b,stroke:#10b981,color:#f8fafc
+    style Cache_Sim fill:#064e3b,stroke:#10b981,color:#f8fafc
+    style Seq_Engine fill:#064e3b,stroke:#10b981,color:#f8fafc
+    style Verilog_Runner fill:#064e3b,stroke:#10b981,color:#f8fafc
+    style VCD_Gen fill:#064e3b,stroke:#10b981,color:#f8fafc
+
+    style Reverse_Proxy fill:#3b0764,stroke:#a855f7,color:#f8fafc
+    style Prometheus_Mon fill:#3b0764,stroke:#a855f7,color:#f8fafc
+    style Grafana_Dash fill:#3b0764,stroke:#a855f7,color:#f8fafc
+    style Docker_Container fill:#3b0764,stroke:#a855f7,color:#f8fafc
+    style CI_Pipeline fill:#3b0764,stroke:#a855f7,color:#f8fafc
+```
 
 ---
 
@@ -31,6 +121,20 @@ An interactive, executive-grade computer architecture simulation and hardware ve
   - Embedded WaveDrom digital timing diagrams and raw `.vcd` waveform export.
 - **Cryptographic Security**:
   - PBKDF2-HMAC-SHA256 user database integrity verification (`users.hmac`) with 32-byte secret key and session tokens.
+
+---
+
+## DevOps Stack & Observability
+
+| Component | Role | Config file |
+|---|---|---|
+| **GitHub Actions** | CI: test + Docker build gate | `.github/workflows/deploy.yml` |
+| **Docker** | Multi-stage production container with `iverilog` | `Dockerfile` |
+| **Docker Compose** | Orchestrates Flask + Nginx + Prometheus + Grafana | `docker-compose.yml` |
+| **Nginx** | Reverse proxy / public entrypoint (:8080) | `nginx/nginx.conf` |
+| **Prometheus** | Metrics scraping from `/metrics` (:9090) | `prometheus/prometheus.yml` |
+| **Grafana** | Real-time analytics dashboard (:3000) | `grafana/` |
+| **Render Cloud** | PaaS 1-click blueprint deployment | `render.yaml` |
 
 ---
 
